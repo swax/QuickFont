@@ -35,7 +35,7 @@ namespace StarterKit
         String usingQuickFontIsSuperEasy = @"Using QuickFont is super easy. To load a font: ";
         String loadingAFont1 = "myFont = new QFont(\"HappySans.ttf\", 16);";
         String andPrintWithIt = @"...and to print with it: ";
-        String printWithFont1 = "QFont.Begin();" + Environment.NewLine + "myFont.Print(\"Hello World!\")" + Environment.NewLine + "QFont.End();";
+        String printWithFont1 = "mainText.Begin();" + Environment.NewLine + "myFont.Print(\"Hello World!\")" + Environment.NewLine + "mainText.End();";
         String itIsAlsoEasyToMeasure = "It is also very easy to measure text: ";
         String measureText1 = "var bounds = myFont.Measure(\"Hello World\"); ";
 
@@ -227,12 +227,22 @@ namespace StarterKit
             heading2 = QFont.FromQFontFile("woodenFont.qfont", 1.0f, new QFontLoaderConfiguration(true));
 
             var builderConfig = new QFontBuilderConfiguration(true);
-            builderConfig.ShadowConfig.blurRadius = 1; //reduce blur radius because font is very small
+            builderConfig.ShadowConfig.blurRadius = 2; //reduce blur radius because font is very small
+            builderConfig.ShadowConfig.blurPasses = 1;
+            builderConfig.ShadowConfig.Type = ShadowType.Blurred;
             builderConfig.TextGenerationRenderHint = TextGenerationRenderHint.ClearTypeGridFit; //best render hint for this font
+            builderConfig.UseVertexBuffer = true;
             mainText = new QFont("Fonts/times.ttf", 14, builderConfig);
+            mainText.Options.DropShadowOffset = new Vector2(0, 0);
+            mainText.Options.DropShadowColour = Color.Red;
 
-          
-            heading1 = new QFont("Fonts/HappySans.ttf", 72, new QFontBuilderConfiguration(true));
+
+
+            heading1 = new QFont("Fonts/HappySans.ttf", 72, new QFontBuilderConfiguration(true)
+            {
+                UseVertexBuffer = true
+            });
+            heading1.Options.DropShadowActive = true;
           
 
             controlsText = new QFont("Fonts/HappySans.ttf", 32, new QFontBuilderConfiguration(true));
@@ -240,10 +250,10 @@ namespace StarterKit
 
             codeText = new QFont("Fonts/Comfortaa-Regular.ttf", 12,FontStyle.Regular);
 
-            heading1.Options.Colour = new Color4(0.2f, 0.2f, 0.2f, 1.0f);
-            mainText.Options.Colour = new Color4(0.1f, 0.1f, 0.1f, 1.0f);
+            heading1.Options.Colour = Color.FromArgb(new Color4(0.2f, 0.2f, 0.2f, 1.0f).ToArgb());
+            mainText.Options.Colour = Color.FromArgb(new Color4(0.1f, 0.1f, 0.1f, 1.0f).ToArgb());
             mainText.Options.DropShadowActive = false;
-            codeText.Options.Colour = new Color4(0.0f, 0.0f, 0.4f, 1.0f);
+            codeText.Options.Colour = Color.FromArgb(new Color4(0.0f, 0.0f, 0.4f, 1.0f).ToArgb());
 
             QFontBuilderConfiguration config2 = new QFontBuilderConfiguration();
             config2.SuperSampleLevels = 1;
@@ -253,7 +263,7 @@ namespace StarterKit
 
 
             monoSpaced = new QFont("Fonts/Anonymous.ttf", 10);
-            monoSpaced.Options.Colour = new Color4(0.1f, 0.1f, 0.1f, 1.0f);
+            monoSpaced.Options.Colour = Color.FromArgb(new Color4(0.1f, 0.1f, 0.1f, 1.0f).ToArgb());
 
             Console.WriteLine(" Monospaced : " + monoSpaced.IsMonospacingActive);
 
@@ -315,7 +325,7 @@ namespace StarterKit
 
             float maxWidth = bounds.Width;
 
-            float height = font.Measure(text, maxWidth, alignment).Height;
+            float height = font.Measure(text, new SizeF(maxWidth, float.MaxValue), alignment).Height;
 
             GL.Begin(BeginMode.LineLoop);
                 GL.Vertex3(bounds.X, bounds.Y, 0f);
@@ -324,13 +334,37 @@ namespace StarterKit
                 GL.Vertex3(bounds.X, bounds.Y + height, 0f);
             GL.End();
 
-            font.Print(text, maxWidth, alignment, new Vector2(bounds.X,bounds.Y));
 
+            font.Print(text, new SizeF(maxWidth, float.MaxValue), alignment, new Vector2(bounds.X, bounds.Y));
             yOffset += height;
 
         }
 
-        
+        private void PrintWithBoundsVBO(QFont font, string text, RectangleF bounds, QFontAlignment alignment, ref float yOffset)
+        {
+
+            GL.Disable(EnableCap.Texture2D);
+            GL.Color4(1.0f, 0f, 0f, 1.0f);
+
+
+            float maxWidth = bounds.Width;
+
+            float height = font.Measure(text, new SizeF(maxWidth, float.MaxValue), alignment).Height;
+
+            GL.Begin(BeginMode.LineLoop);
+            GL.Vertex3(bounds.X, bounds.Y, 0f);
+            GL.Vertex3(bounds.X + bounds.Width, bounds.Y, 0f);
+            GL.Vertex3(bounds.X + bounds.Width, bounds.Y + height, 0f);
+            GL.Vertex3(bounds.X, bounds.Y + height, 0f);
+            GL.End();
+
+            font.ResetVBOs();
+            font.PrintToVBO(text, new SizeF(maxWidth, float.MaxValue), alignment, new Vector2(bounds.X, bounds.Y));
+            font.LoadVBOs();
+            font.DrawVBOs();
+            yOffset += height;
+
+        }       
        //some helpers
 
 
@@ -342,12 +376,11 @@ namespace StarterKit
 
         private void PrintComment(QFont font, string comment,QFontAlignment alignment, ref float yOffset){
 
-
             GL.PushMatrix();
                 yOffset += 20;
                 GL.Translate(30f, yOffset, 0f);
-                font.Print(comment, Width - 60, alignment);
-                yOffset += font.Measure(comment, Width - 60, alignment).Height;
+                font.Print(comment, new SizeF(Width - 60, float.MaxValue), alignment);
+                yOffset += font.Measure(comment, new SizeF(Width - 60, float.MaxValue), alignment).Height;
             GL.PopMatrix();
 
         }
@@ -367,7 +400,7 @@ namespace StarterKit
             yOffset += 20;
             GL.Translate((int)xOffset, yOffset, 0f);
             font.Print(comment, alignment);
-            var bounds = font.Measure(comment, Width-60, alignment);
+            var bounds = font.Measure(comment, new SizeF(Width - 60, float.MaxValue), alignment);
 
 
             GL.Disable(EnableCap.Texture2D);
@@ -388,8 +421,8 @@ namespace StarterKit
             GL.PushMatrix();
                 yOffset += 20;
                 GL.Translate(50f, yOffset, 0f);
-                codeText.Print(code, Width - 50, QFontAlignment.Left);
-                yOffset += codeText.Measure(code, Width - 50, QFontAlignment.Left).Height;
+                codeText.Print(code, new SizeF(Width - 50, float.MaxValue), QFontAlignment.Left);
+                yOffset += codeText.Measure(code, new SizeF(Width - 50, float.MaxValue), QFontAlignment.Left).Height;
             GL.PopMatrix();
 
         }
@@ -411,7 +444,7 @@ namespace StarterKit
             GL.LoadMatrix(ref modelview);
 
 
-            QFont.Begin();
+            mainText.Begin();
             GL.Begin(BeginMode.Quads);
  
 
@@ -423,7 +456,7 @@ namespace StarterKit
      
   
             GL.End();
-            QFont.End();
+            mainText.End();
 
 
 
@@ -434,13 +467,15 @@ namespace StarterKit
                     {
                         float yOffset = 0;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
-                            GL.PushMatrix();
-                                GL.Translate(Width * 0.5f, yOffset, 0f);
-                                heading1.Print("QuickFont", QFontAlignment.Centre);
+                                heading1.ResetVBOs();
+                                heading1.PrintToVBO("QuickFont", new Vector3(Width * 0.5f, yOffset, 0f),
+                                    heading1.Options.Colour, QFontAlignment.Centre);
                                 yOffset += heading1.Measure("QuickFont").Height;
-                            GL.PopMatrix();
+                                heading1.LoadVBOs();
+                                heading1.DrawVBOs();
+
 
 
                             GL.PushMatrix();
@@ -450,13 +485,13 @@ namespace StarterKit
                             GL.PopMatrix();
 
 
-                            GL.PushMatrix();
-                                GL.Translate(30f, yOffset + 20, 0f);
-                                mainText.Print(introduction, Width - 60, QFontAlignment.Justify);
-                            GL.PopMatrix();
+                                mainText.ResetVBOs();
+                                mainText.PrintToVBO(introduction, new SizeF(Width - 50, float.MaxValue),
+                                    QFontAlignment.Justify, new Vector2(30f, yOffset + 20));
+                                mainText.LoadVBOs();
+                                mainText.DrawVBOs();
 
-
-                        QFont.End();
+                            mainText.End();
                         
                     }
                     break;
@@ -469,7 +504,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                             GL.PushMatrix();
@@ -491,7 +526,7 @@ namespace StarterKit
                             PrintComment(oneOfTheFirstGotchas, ref yOffset);
                             PrintCode(loadingAFont2, ref yOffset);
 
-                        QFont.End();
+                            mainText.End();
            
                     }
                     break;
@@ -501,7 +536,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                         GL.PushMatrix();
@@ -519,7 +554,7 @@ namespace StarterKit
 
                         PrintCommentWithLine(centredTextAsYou, QFontAlignment.Centre, Width * 0.5f, ref yOffset);
    
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -531,7 +566,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                         GL.PushMatrix();
@@ -563,7 +598,7 @@ namespace StarterKit
 
 
 
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -578,7 +613,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                         GL.PushMatrix();
@@ -594,7 +629,7 @@ namespace StarterKit
                 
                         
 
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -605,7 +640,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                         GL.PushMatrix();
@@ -621,7 +656,7 @@ namespace StarterKit
                         PrintCode(textureFontCode3, ref yOffset);
 
 
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -633,7 +668,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                         heading2.Options.DropShadowOffset = new Vector2(0.1f + 0.2f * (float)Math.Sin(cnt), 0.1f + 0.2f * (float)Math.Cos(cnt));
@@ -647,7 +682,7 @@ namespace StarterKit
                         heading2.Options.DropShadowOffset = new Vector2(0.16f, 0.16f); //back to default
 
                         mainText.Options.DropShadowActive = true;
-                        mainText.Options.DropShadowOpacity = 0.7f;
+                        mainText.Options.DropShadowColour = Color.FromArgb((byte) (0.7 * 255), Color.White);
                         mainText.Options.DropShadowOffset = new Vector2(0.1f + 0.2f * (float)Math.Sin(cnt), 0.1f + 0.2f * (float)Math.Cos(cnt));
 
 
@@ -661,7 +696,7 @@ namespace StarterKit
 
                         mainText.Options.DropShadowActive = false;
 
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -674,7 +709,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
 
@@ -702,7 +737,7 @@ namespace StarterKit
                         PrintComment(monoSpaced, "As usual, you can adjust character spacing with myFont.Options.CharacterSpacing.", QFontAlignment.Left, ref yOffset);
 
 
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -713,7 +748,7 @@ namespace StarterKit
 
                         float yOffset = 20;
 
-                        QFont.Begin();
+                        mainText.Begin();
 
 
                         GL.PushMatrix();
@@ -728,7 +763,7 @@ namespace StarterKit
 
       
 
-                        QFont.End();
+                        mainText.End();
 
                     }
                     break;
@@ -740,14 +775,14 @@ namespace StarterKit
 
 
 
-            QFont.Begin();
+            mainText.Begin();
             
 
             if (currentDemoPage != lastPage)
             {
                 GL.PushMatrix();
                 GL.Translate(Width - 10 - 16 * (float)(1 + Math.Sin(cnt * 4)), Height - controlsText.Measure("P").Height - 10f, 0f);
-                controlsText.Options.Colour = new Color4(0.8f, 0.1f, 0.1f, 1.0f);
+                controlsText.Options.Colour = Color.FromArgb(new Color4(0.8f, 0.1f, 0.1f, 1.0f).ToArgb());
                 controlsText.Print("Press [Right] ->", QFontAlignment.Right);
                 GL.PopMatrix();
             }
@@ -758,13 +793,13 @@ namespace StarterKit
 
                 GL.PushMatrix();
                 GL.Translate(10 + 16 * (float)(1 + Math.Sin(cnt * 4)), Height - controlsText.Measure("P").Height - 10f, 0f);
-                controlsText.Options.Colour = new Color4(0.8f, 0.1f, 0.1f, 1.0f);
+                controlsText.Options.Colour = Color.FromArgb(new Color4(0.8f, 0.1f, 0.1f, 1.0f).ToArgb());
                 controlsText.Print("<- Press [Left]", QFontAlignment.Left);
                 GL.PopMatrix();
             }
 
             
-            QFont.End();
+            mainText.End();
 
 
 
