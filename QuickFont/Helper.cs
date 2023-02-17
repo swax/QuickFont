@@ -20,7 +20,7 @@ namespace QuickFont
         /// </summary>
         /// <param name="mode"></param>
         /// <param name="code"></param>
-        public static void SafeGLBegin(BeginMode mode, Action code)
+        public static void SafeGLBegin(PrimitiveType mode, Action code)
         {
             GL.Begin(mode);
 

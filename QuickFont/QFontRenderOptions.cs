@@ -4,6 +4,7 @@ using System.Text;
 using OpenTK;
 using System.Drawing;
 using OpenTK.Graphics;
+using OpenTK.Mathematics;
 
 namespace QuickFont
 {

@@ -18,3 +18,5 @@
 31/12/2011 - Fixed limitation on downscaling texture fonts (previously glyphs could overlap, throwing an exception)
 
 02/06/2012 - Added vertex buffer support
+
+02/16/2023 - Updated to .Net 6 and OpenTK 4.7.5

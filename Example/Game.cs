@@ -10,6 +10,10 @@ using OpenTK.Audio.OpenAL;
 using OpenTK.Input;
 using QuickFont;
 using System.Drawing;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace StarterKit
 {
@@ -127,34 +131,34 @@ namespace StarterKit
 
         QFontAlignment cycleAlignment = QFontAlignment.Left;
 
+        const int Width = 800;
+        const int Height = 600;
+
         /// <summary>Creates a 800x600 window with the specified title.</summary>
         public Game()
-            : base(800, 600, GraphicsMode.Default, "OpenTK Quick Start Sample")
+            : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (Width, Height), Title = "OpenTK Quick Start Sample", Profile = ContextProfile.Compatability })
         {
             VSync = VSyncMode.On;
             this.WindowBorder = WindowBorder.Fixed;
         }
 
-
-
-
-
-        private void KeyDown(object sender, KeyboardKeyEventArgs keyEventArgs)
+        protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
+            base.OnKeyDown(e);
   
-            switch (keyEventArgs.Key)
+            switch (e.Key)
             {
-                case Key.Space:
-                case Key.Right:
+                case Keys.Space:
+                case Keys.Right:
                     currentDemoPage++;
                     break;
 
-                case Key.BackSpace:
-                case Key.Left:
+                case Keys.Backspace:
+                case Keys.Left:
                     currentDemoPage--;
                     break;
 
-                case Key.Enter:
+                case Keys.Enter:
                     {
                         if (currentDemoPage == 4)
                             boundsAnimationCnt = 0f;
@@ -162,7 +166,7 @@ namespace StarterKit
                     }
                     break;
 
-                case Key.Up:
+                case Keys.Up:
                     {
                         if (currentDemoPage == 4)
                         {
@@ -177,7 +181,7 @@ namespace StarterKit
                     break;
 
 
-                case Key.Down:
+                case Keys.Down:
                     {
                         if (currentDemoPage == 4)
                         {
@@ -190,7 +194,7 @@ namespace StarterKit
 
                     }
                     break;
-                case Key.F9:
+                case Keys.F9:
                     
                     break;
 
@@ -208,12 +212,9 @@ namespace StarterKit
 
         /// <summary>Load resources here.</summary>
         /// <param name="e">Not used.</param>
-        protected override void OnLoad(EventArgs e)
+        protected override void OnLoad()
         {
-            base.OnLoad(e);
-
-            this.Keyboard.KeyDown += KeyDown;
-
+            base.OnLoad();
 
             /*
             QFontBuilderConfiguration config = new QFontBuilderConfiguration();
@@ -240,10 +241,10 @@ namespace StarterKit
 
             codeText = new QFont("Fonts/Comfortaa-Regular.ttf", 12,FontStyle.Regular);
 
-            heading1.Options.Colour = new Color4(0.2f, 0.2f, 0.2f, 1.0f);
-            mainText.Options.Colour = new Color4(0.1f, 0.1f, 0.1f, 1.0f);
+            heading1.Options.Colour = (Color)new Color4(0.2f, 0.2f, 0.2f, 1.0f);
+            mainText.Options.Colour = (Color)new Color4(0.1f, 0.1f, 0.1f, 1.0f);
             mainText.Options.DropShadowActive = false;
-            codeText.Options.Colour = new Color4(0.0f, 0.0f, 0.4f, 1.0f);
+            codeText.Options.Colour = (Color)new Color4(0.0f, 0.0f, 0.4f, 1.0f);
 
             QFontBuilderConfiguration config2 = new QFontBuilderConfiguration();
             config2.SuperSampleLevels = 1;
@@ -253,7 +254,7 @@ namespace StarterKit
 
 
             monoSpaced = new QFont("Fonts/Anonymous.ttf", 10);
-            monoSpaced.Options.Colour = new Color4(0.1f, 0.1f, 0.1f, 1.0f);
+            monoSpaced.Options.Colour = (Color)new Color4(0.1f, 0.1f, 0.1f, 1.0f);
 
             Console.WriteLine(" Monospaced : " + monoSpaced.IsMonospacingActive);
 
@@ -269,11 +270,11 @@ namespace StarterKit
         /// along when the aspect ratio of your window).
         /// </summary>
         /// <param name="e">Not used.</param>
-        protected override void OnResize(EventArgs e)
+        protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
 
-            GL.Viewport(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height);
+            GL.Viewport(0, 0, e.Width, e.Height);
 
             Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, Width / (float)Height, 1.0f, 64.0f);
             GL.MatrixMode(MatrixMode.Projection);
@@ -291,10 +292,8 @@ namespace StarterKit
         {
             base.OnUpdateFrame(e);
 
-            if (Keyboard[Key.Escape])
-                Exit();
-
-
+            if (KeyboardState.IsKeyDown(Keys.Escape))
+                Close();
 
             cnt += e.Time;
 
@@ -317,7 +316,7 @@ namespace StarterKit
 
             float height = font.Measure(text, maxWidth, alignment).Height;
 
-            GL.Begin(BeginMode.LineLoop);
+            GL.Begin(PrimitiveType.LineLoop);
                 GL.Vertex3(bounds.X, bounds.Y, 0f);
                 GL.Vertex3(bounds.X + bounds.Width, bounds.Y, 0f);
                 GL.Vertex3(bounds.X + bounds.Width, bounds.Y + height, 0f);
@@ -371,7 +370,7 @@ namespace StarterKit
 
 
             GL.Disable(EnableCap.Texture2D);
-            GL.Begin(BeginMode.Lines);
+            GL.Begin(PrimitiveType.Lines);
                 GL.Color4(1.0f, 0f, 0f, 1f); GL.Vertex2(0f, 0f);
                 GL.Color4(1.0f, 0f, 0f, 1f); GL.Vertex2(0f, bounds.Height + 20f);
             GL.End();
@@ -412,7 +411,7 @@ namespace StarterKit
 
 
             QFont.Begin();
-            GL.Begin(BeginMode.Quads);
+            GL.Begin(PrimitiveType.Quads);
  
 
             GL.Color3(1.0f, 1.0f, 1.0); GL.Vertex2(0, 0);
@@ -747,7 +746,7 @@ namespace StarterKit
             {
                 GL.PushMatrix();
                 GL.Translate(Width - 10 - 16 * (float)(1 + Math.Sin(cnt * 4)), Height - controlsText.Measure("P").Height - 10f, 0f);
-                controlsText.Options.Colour = new Color4(0.8f, 0.1f, 0.1f, 1.0f);
+                controlsText.Options.Colour = (Color)new Color4(0.8f, 0.1f, 0.1f, 1.0f);
                 controlsText.Print("Press [Right] ->", QFontAlignment.Right);
                 GL.PopMatrix();
             }
@@ -758,7 +757,7 @@ namespace StarterKit
 
                 GL.PushMatrix();
                 GL.Translate(10 + 16 * (float)(1 + Math.Sin(cnt * 4)), Height - controlsText.Measure("P").Height - 10f, 0f);
-                controlsText.Options.Colour = new Color4(0.8f, 0.1f, 0.1f, 1.0f);
+                controlsText.Options.Colour = (Color)new Color4(0.8f, 0.1f, 0.1f, 1.0f);
                 controlsText.Print("<- Press [Left]", QFontAlignment.Left);
                 GL.PopMatrix();
             }
@@ -784,7 +783,7 @@ namespace StarterKit
             // RenderFrame events (as fast as the computer can handle).
             using (Game game = new Game())
             {
-                game.Run(30.0);
+                game.Run();
             }
         }
     }

@@ -8,6 +8,7 @@ using System.Linq;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Graphics;
+using OpenTK.Mathematics;
 
 namespace QuickFont
 {
@@ -323,7 +324,7 @@ namespace QuickFont
                 GL.Color4(color);
                 GL.BindTexture(TextureTarget.Texture2D, sheet.GLTexID);
 
-                GL.Begin(BeginMode.Quads);
+                GL.Begin(PrimitiveType.Quads);
                 GL.TexCoord2(tv1); GL.Vertex3(v1);
                 GL.TexCoord2(tv2); GL.Vertex3(v2);
                 GL.TexCoord2(tv3); GL.Vertex3(v3);
@@ -447,6 +448,11 @@ namespace QuickFont
             GL.PopMatrix();
         }
 
+        public void Print(string text, float maxWidth, QFontAlignment alignment, Vector2 position)
+        {
+            Print(text, new SizeF(maxWidth, float.MaxValue), alignment, position);
+        }
+
         public void Print(string text, SizeF maxSize, QFontAlignment alignment, Vector2 position)
         {
             position = TransformPositionToViewport(position);
@@ -506,6 +512,11 @@ namespace QuickFont
             return Measure(processedText);
         }
 
+        public SizeF Measure(string text, float maxWidth, QFontAlignment alignment)
+        {
+            return Measure(text, new SizeF(maxWidth, float.MaxValue), alignment);
+        }
+
         /// <summary>
         /// Measures the actual width and height of the block of text
         /// </summary>
@@ -537,7 +548,7 @@ namespace QuickFont
                     GL.Color4(1.0f, 1.0f, 1.0f, 1.0f);
 
                     if (Options.UseDefaultBlendFunction)
-                        GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+                        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 }
                 
                 text = text.Replace("\r\n", "\r");
@@ -994,6 +1005,11 @@ namespace QuickFont
             Print(processedText);
         }
 
+        public void Print(string text, float maxWidth, QFontAlignment alignment)
+        {
+            Print(text, new SizeF(maxWidth, float.MaxValue), alignment);
+        }
+
 
 
 
@@ -1073,7 +1089,7 @@ namespace QuickFont
             Helper.SafeGLEnable(caps, () =>
             {
                 if (!measureOnly && !UsingVertexBuffers && Options.UseDefaultBlendFunction)
-                    GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+                    GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                 float maxWidth = processedText.maxSize.Width;
                 var alignment = processedText.alignment;

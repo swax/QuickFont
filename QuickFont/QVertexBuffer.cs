@@ -6,7 +6,7 @@ using OpenTK;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing;
-
+using OpenTK.Mathematics;
 
 namespace QuickFont
 {
@@ -76,7 +76,7 @@ namespace QuickFont
 
             Helper.SafeGLEnable(DrawCaps, () =>
             {
-                GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                 Helper.SafeGLEnableClientStates(DrawStates, () =>
                 {
@@ -89,7 +89,7 @@ namespace QuickFont
                     GL.ColorPointer(4, ColorPointerType.UnsignedByte, BlittableValueType.StrideOf(Vertices), new IntPtr(32)); 
 
                     // triangles because quads are depreciated in new opengl versions
-                    GL.DrawArrays(BeginMode.Triangles, 0, VertexCount);
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, VertexCount);
                 });
             });
         }

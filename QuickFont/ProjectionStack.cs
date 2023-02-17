@@ -4,7 +4,7 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Graphics;
-
+using OpenTK.Mathematics;
 
 namespace QuickFont
 {
@@ -40,7 +40,7 @@ namespace QuickFont
 
         public static void UpdateCurrentViewport()
         {
-            GraphicsContext.Assert();
+            // GraphicsContext.Assert();
             Viewport viewport = new Viewport();
             GL.GetInteger(GetPName.Viewport, out viewport.X);
             currentViewport = viewport;
@@ -82,7 +82,7 @@ namespace QuickFont
         public static void Begin()
         {
 
-            GraphicsContext.Assert();
+            // GraphicsContext.Assert();
 
             Viewport currentVp = (Viewport)CurrentViewport;
 
@@ -99,7 +99,7 @@ namespace QuickFont
 
         public static void End()
         {
-            GraphicsContext.Assert();
+            // GraphicsContext.Assert();
 
             GL.MatrixMode(MatrixMode.Modelview);
             GL.PopMatrix(); //pop modelview

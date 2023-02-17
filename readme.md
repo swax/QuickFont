@@ -1,5 +1,9 @@
+Fork of James Lohr's font library for OpenTK with added vertex buffer support. 
 
-###Using Vertex Buffers
+Updated to .Net 6 and OpenTK 4.7.5. See the `dotnet-framework` branch for the old version
+
+### How to use
+
 Initialize your vertex buffer
 ```C#
 var config = new QFontBuilderConfiguration() 
